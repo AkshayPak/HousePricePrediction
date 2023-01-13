@@ -84,5 +84,69 @@ X = pd.get_dummies(X, columns=cat_cols)
 
 imp_num_colns.remove("SalePrice")
 scaler = StandardScaler()
-X[imp_num_colns]= scaler.fit_transform(X[imp_num_colns])
-print(X)
+X[imp_num_colns] = scaler.fit_transform(X[imp_num_colns])
+
+# print(X.head())
+
+# Train-Test Split
+# Splitting the data into Train and Test chunks for better evaluation
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+# Defining functions
+
+def rmse_csv(model):
+    rmse = np.sqrt(-cross_val_score(model, X, y, scoring="neg_mean_squared_error", cv=5)).mean()
+    return rmse
+
+
+def evaluation(y, predictions):
+    mae = mean_absolute_error(y, predictions)
+    mse = mean_squared_error(y, predictions)
+    rmse = np.sqrt(mean_squared_error(y, predictions))
+    r_squared = r2_score(y, predictions)
+    return mae, mse, rmse, r_squared
+
+
+# Machine Learning Models
+
+models = pd.DataFrame(columns=["Model", "MAE", "MSE", "RMSE", "R2 Score", "RMSE (Cross-Validation)"])
+
+# Linear Regression
+
+lin_reg = LinearRegression()
+lin_reg.fit(X_train, y_train)
+predictions = lin_reg.predict(X_test)
+
+mae, mse, rmse, r_squared = evaluation(y_test, predictions)
+print("MAE:", mae)
+print("mse:", mse)
+print("rmse:", rmse)
+print("r2 score:", r_squared)
+print("--" * 30)
+rmse_cross_val = rmse_csv(lin_reg)
+print("rmse Cross-validation:", rmse_cross_val)
+new_row = {"Model": "LinearRegression", "MAE": mae, "MSE": mse, "RMSE": rmse, "R2 Score": r_squared,
+           "RMSE (Cross-Validation)": rmse_cross_val}
+models = models.append(new_row, ignore_index=True)
+
+# Ridge regression
+
+ridge = Ridge()
+ridge.fit(X_train, y_train)
+predictions = ridge.predict(X_test)
+
+mae, mse, rmse, r_squared = evaluation(y_test, predictions)
+print("MAE:", mae)
+print("mse:", mse)
+print("rmse:", rmse)
+print("r2 score:", r_squared)
+print("--" * 30)
+rmse_cross_val = rmse_csv(ridge)
+print("RMSE Cross-Validation:", rmse_cross_val)
+new_row = {"Model": "Ridge", "MAE": mae, "MSE": mse, "RMSE": rmse, "R2 Score": r_squared,
+           "RMSE (Cross-Validation)": rmse_cross_val}
+models = models.append(new_row, ignore_index=True)
+
+
